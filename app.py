@@ -1,5 +1,6 @@
 import requests 
 import time
+import sys
 
 API_URL = "https://api-inference.huggingface.co/models/"
 API_KEY = "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"
@@ -14,13 +15,16 @@ def get_output(model, input_json):
     return response.json()
 
 # Function to summarize text
-def summarize_text(model, input_json):
+def summarize_text(model, input_json, file_name):
     output = get_output(model, input_json)
     try:
         # Save the summary to a file
-        with open("summary.txt", "w") as f:
-            f.write(output[0]["summary_text"])
-            print("\nSummary saved to summary.txt")
+        if file_name:
+            with open(file_name, "w") as f:
+                f.write(output[0]["summary_text"])
+                print(f"\nSummary saved to {file_name}")
+        else:
+            print("\nSummary:\n" + output[0]["summary_text"])
     except:
         try:
             # Handle estimated time for processing
@@ -32,19 +36,25 @@ def summarize_text(model, input_json):
             print("Model service not available. Please try again later.")
 
 # Function to translate text
-def translate_text(model, input_json):
+def translate_text(model, input_json, file_name):
     output = get_output(model, input_json)
     try:
         try:
             # Save the translation to a file (remove suggestions and improvements)
-            with open("translation.txt", "w") as f:
-                f.write(output[0]["generated_text"].split("improvements.")[1].strip())
-                print("\nTranslation saved to translation.txt")
+            if file_name:
+                with open(file_name, "w") as f:
+                    f.write(output[0]["generated_text"].split("improvements.")[1].strip())
+                    print(f"\nTranslation saved to {file_name}")
+            else:
+                print("\nTranslation:\n" + output[0]["generated_text"].split("improvements.")[1].strip())
         except:
             # Save the translation to a file
-            with open("translation.txt", "w") as f:
-                f.write(output[0]["generated_text"])
-                print("\nTranslation saved to translation.txt")
+            if file_name:
+                with open(file_name, "w") as f:
+                    f.write(output[0]["generated_text"])
+                    print(f"\nTranslation saved to {file_name}")
+            else:
+                print("\nTranslation:\n" + output[0]["generated_text"])
     except:
         try:
             # Handle estimated time for processing
@@ -55,13 +65,16 @@ def translate_text(model, input_json):
             print("\nModel service not available. Please try again later.")
 
 # Function to generate (expand) text
-def generate_text(model, input_json):
+def generate_text(model, input_json, file_name="generation.txt"):
     output = get_output(model, input_json)
     try:
         # Save the generated text to a file
-        with open("generation.txt", "w") as f:
-            f.write(output[0]["generated_text"])
-            print("\nGenerated text saved to generation.txt")
+        if file_name:
+            with open(file_name, "w") as f:
+                f.write(output[0]["generated_text"])
+                print(f"\nGenerated text saved to {file_name}")
+        else:
+            print("\nGenerated text:\n" + output[0]["generated_text"])
     except:
         try:
             # Handle estimated time for processing
@@ -72,19 +85,25 @@ def generate_text(model, input_json):
             print("Model service not available. Please try again later.")
 
 # Function to fact-check text
-def fact_check(model, input_json):
+def fact_check(model, input_json, file_name="fact_check.txt"):
     output = get_output(model, input_json)
     try:
         try:
             #save the answer to a file (remove the question)
-            with open("fact_check.txt", "w") as f:
-                f.write(output[0]['generated_text'].split("?")[1].strip())
-                print("\nFact-check saved to fact_check.txt")
+            if file_name:
+                with open(file_name, "w") as f:
+                    f.write(output[0]['generated_text'].split("?")[1].strip())
+                    print(f"\nFact-check saved to {file_name}")
+            else:
+                print("\nFact-check:\n" + output[0]['generated_text'].split("?")[1].strip())
         except:
             #save the answer to a file
-            with open("fact_check.txt", "w") as f:
-                f.write(output[0]['generated_text'])
-                print("\nFact-check saved to fact_check.txt")
+            if file_name:
+                with open(file_name, "w") as f:
+                    f.write(output[0]['generated_text'])
+                    print(f"\nFact-check saved to {file_name}")
+            else:
+                print("\nFact-check:\n" + output[0]['generated_text'])
     except:
         try:
             # Handle estimated time for processing
@@ -97,9 +116,20 @@ def fact_check(model, input_json):
             
 
 # Main function to run the console application
-def main():
+def main(file_name=None):
+
+    # Check if an output file name is provided correctly
+    if file_name:
+        if not file_name.endswith(".txt"):
+            file_name += ".txt"
+        print(f"Output will be saved to {file_name}")
+
+    # Main loop to select a task
     while True:
         # Prompt user to select a task
+
+        time.sleep(1) #we wait for a second for every request for the user to see the output
+
         print("\nPlease select a task:")
         print("1. Summarize text")
         print("2. Translate text to another language")
@@ -116,7 +146,7 @@ def main():
             input_json = {
                 "inputs": text
             }
-            summarize_text(model, input_json)
+            summarize_text(model, input_json, file_name)
 
         elif task == "2":
             # Translate text
@@ -125,7 +155,7 @@ def main():
             input_json = {
                 "inputs": text
             }
-            translate_text(model, input_json)
+            translate_text(model, input_json, file_name)
 
         elif task == "3":
             # Expand text
@@ -134,7 +164,7 @@ def main():
             input_json = {
                 "inputs": prompt
             }
-            generate_text(model, input_json)
+            generate_text(model, input_json, file_name)
         
         elif task == "4":
             # Fact-check text
@@ -143,12 +173,17 @@ def main():
             input_json = {
                 "inputs": "Answer me if it is true or false that " + text + " ?"
             }
-            fact_check(model, input_json)
+            fact_check(model, input_json, file_name)
         
         elif task == "5":
             break
+
         else:
             print("\nInvalid task number. Please try again.")
 
 if __name__ == "__main__":
-    main()
+    #output file name: python3 app.py output.txt
+    file_name = None
+    if len(sys.argv) > 1:
+        file_name = sys.argv[1]
+    main(file_name)
