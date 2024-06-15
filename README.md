@@ -11,11 +11,11 @@ pip install requests
 ## To run the app and save output to a file:
 
 ```bash
-python3 app.py <file_name>.txt
+python app.py <file_name>.txt
 ```
 
 ## To run the app:
 
 ```bash
-python3 app.py
+python app.py
 ```
